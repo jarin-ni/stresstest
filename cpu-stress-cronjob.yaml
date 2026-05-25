@@ -32,20 +32,16 @@ spec:
               imagePullPolicy: IfNotPresent
 
               command:
-                - stress
+                - /bin/sh
+                - -c
 
               args:
-                - "--cpu"
-                - "48"
-
-                - "--vm"
-                - "6"
-
-                - "--vm-bytes"
-                - "100G"
-
-                - "--timeout"
-                - "180s"
+                - |
+                  stress \
+                  --cpu 48 \
+                  --vm 6 \
+                  --vm-bytes 100G \
+                  --timeout 180s
 
               resources:
                 requests:
@@ -55,3 +51,56 @@ spec:
                 limits:
                   cpu: "48"
                   memory: "650Gi"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stress-runner
+  namespace: stress-test
+
+spec:
+  replicas: 5
+
+  selector:
+    matchLabels:
+      app: stress-runner
+
+  template:
+    metadata:
+      labels:
+        app: stress-runner
+
+    spec:
+      restartPolicy: Always
+
+      containers:
+        - name: stress
+
+          image: polinux/stress
+          imagePullPolicy: IfNotPresent
+
+          command:
+            - /bin/sh
+            - -c
+
+          args:
+            - |
+              while true; do
+                stress \
+                --cpu 48 \
+                --vm 6 \
+                --vm-bytes 100G \
+                --timeout 180s
+
+                sleep 120
+              done
+
+          resources:
+            requests:
+              cpu: "4"
+              memory: "4Gi"
+
+            limits:
+              cpu: "48"
+              memory: "650Gi"
